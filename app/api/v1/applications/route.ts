@@ -1,5 +1,8 @@
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { ok, err } from "@/lib/api-response";
+import { resend, FROM_EMAIL } from "@/lib/resend";
+import { newApplicationEmail } from "@/emails/new-application";
+import { applicationConfirmedEmail } from "@/emails/application-confirmed";
 import { z } from "zod";
 
 const schema = z.object({
@@ -24,7 +27,7 @@ export async function POST(request: Request) {
 
   const { data: candidate } = await service
     .from("candidates")
-    .select("id, profile_completeness")
+    .select("id, first_name, last_name, city, profile_completeness")
     .eq("user_id", user.id)
     .single();
   if (!candidate) return err("Candidate profile not found", 404);
@@ -34,7 +37,7 @@ export async function POST(request: Request) {
 
   const { data: job } = await service
     .from("job_postings")
-    .select("id, expires_at")
+    .select("id, title, city, expires_at, company_id, recruiter_id")
     .eq("id", parsed.data.job_id)
     .eq("status", "active")
     .single();
@@ -64,6 +67,58 @@ export async function POST(request: Request) {
     .single();
 
   if (error) return err("Failed to submit application", 500);
+
+  // Send notifications — errors are non-fatal
+  try {
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+
+    const [recruiterRes, companyRes, candidateUserRes, recruiterUserRes] = await Promise.all([
+      service.from("recruiters").select("first_name, user_id").eq("id", job.recruiter_id).single(),
+      service.from("companies").select("name").eq("id", job.company_id).single(),
+      service.auth.admin.getUserById(user.id),
+      service.from("recruiters").select("user_id").eq("id", job.recruiter_id).single(),
+    ]);
+
+    const recruiter = recruiterRes.data;
+    const company = companyRes.data;
+    const candidateEmail = candidateUserRes.data?.user?.email;
+    const recruiterUserId = recruiterUserRes.data?.user_id;
+    const recruiterEmailRes = recruiterUserId
+      ? await service.auth.admin.getUserById(recruiterUserId)
+      : null;
+    const recruiterEmail = recruiterEmailRes?.data?.user?.email;
+
+    await Promise.all([
+      recruiterEmail && recruiter
+        ? resend.emails.send({
+            from: FROM_EMAIL,
+            to: recruiterEmail,
+            ...newApplicationEmail({
+              recruiterName: recruiter.first_name,
+              jobTitle: job.title,
+              candidateName: `${candidate.first_name} ${candidate.last_name}`,
+              candidateCity: candidate.city,
+              candidatureUrl: `${appUrl}/offres/${job.id}/candidatures`,
+            }),
+          })
+        : Promise.resolve(),
+      candidateEmail
+        ? resend.emails.send({
+            from: FROM_EMAIL,
+            to: candidateEmail,
+            ...applicationConfirmedEmail({
+              candidateName: candidate.first_name,
+              jobTitle: job.title,
+              companyName: company?.name ?? "",
+              jobCity: job.city,
+              candidaturesUrl: `${appUrl}/candidatures`,
+            }),
+          })
+        : Promise.resolve(),
+    ]);
+  } catch {
+    // Email failure does not fail the application submission
+  }
 
   return ok({ application }, 201);
 }
