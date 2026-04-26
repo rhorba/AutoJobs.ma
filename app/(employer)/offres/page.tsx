@@ -71,6 +71,11 @@ export default async function OffresPage() {
               <div className="flex items-center gap-4">
                 <span className="text-sm text-muted-foreground">{job.views_count} vue{job.views_count !== 1 ? "s" : ""}</span>
                 <Badge variant={STATUS_VARIANT[job.status]}>{STATUS_LABELS[job.status]}</Badge>
+                {job.status === "active" && (
+                  <Link href={`/offres/${job.id}/candidatures`} className={cn(buttonVariants({ size: "sm", variant: "outline" }))}>
+                    Candidatures
+                  </Link>
+                )}
               </div>
             </div>
           ))}
