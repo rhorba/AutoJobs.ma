@@ -1,6 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
 
+const PH_HOST = process.env.NEXT_PUBLIC_POSTHOG_HOST ?? "https://eu.posthog.com";
+
+function buildCSP(): string {
+  const ph = new URL(PH_HOST).hostname;
+  return [
+    "default-src 'self'",
+    `script-src 'self' 'unsafe-inline' https://${ph}`,  // TODO: replace unsafe-inline with nonce
+    `connect-src 'self' https://${ph} https://*.supabase.co`,
+    "img-src 'self' data: blob:",
+    "style-src 'self' 'unsafe-inline'",
+    "font-src 'self'",
+    "frame-src 'none'",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+  ].join("; ");
+}
+
 // Routes that require a specific role
 const EMPLOYER_PREFIXES = ["/tableau-de-bord", "/offres", "/talents", "/facturation"];
 const CANDIDATE_PREFIXES = ["/profil", "/candidatures"];
@@ -77,6 +95,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  supabaseResponse.headers.set("Content-Security-Policy", buildCSP());
   return supabaseResponse;
 }
 
