@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { ProfileForm } from "./profile-form";
 import { ExperienceSection } from "./experience-section";
+import { CvUpload } from "./cv-upload";
 import { Progress } from "@/components/ui/progress";
 
 export default async function ProfilPage() {
@@ -57,6 +58,9 @@ export default async function ProfilPage() {
         allTags={allTags}
         selectedTagIds={Array.from(mySkillIds)}
       />
+
+      {/* CV upload */}
+      <CvUpload hasCv={!!candidate.cv_file_path} />
 
       {/* Experience section */}
       <ExperienceSection experiences={myExperiences} />
