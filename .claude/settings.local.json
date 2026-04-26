@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(bash skills/project-monitor/templates/init-logs.sh)",
+      "Bash(mkdir -p docs)",
+      "Bash(cat)",
+      "Bash(npm --version)",
+      "Bash(npx create-next-app@latest . --typescript --tailwind --eslint --app --no-src-dir --import-alias \"@/*\" --no-turbopack --yes)",
+      "Bash(npx create-next-app@latest autojobs-next --typescript --tailwind --eslint --app --no-src-dir --import-alias \"@/*\" --no-turbopack --yes)",
+      "Bash(npx shadcn@latest init --yes --defaults)",
+      "Bash(npm run *)",
+      "Bash(npm install *)",
+      "Bash(npx supabase *)",
+      "Bash(git init *)",
+      "Bash(git add *)",
+      "Bash(git commit -m 'feat\\(scaffold\\): initialize Next.js 16 + Tailwind v4 + shadcn/ui + Supabase setup *)"
+    ]
+  }
+}
