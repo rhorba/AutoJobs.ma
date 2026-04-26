@@ -13,7 +13,14 @@
       "Bash(npx supabase *)",
       "Bash(git init *)",
       "Bash(git add *)",
-      "Bash(git commit -m 'feat\\(scaffold\\): initialize Next.js 16 + Tailwind v4 + shadcn/ui + Supabase setup *)"
+      "Bash(git commit -m 'feat\\(scaffold\\): initialize Next.js 16 + Tailwind v4 + shadcn/ui + Supabase setup *)",
+      "Bash(git rm *)",
+      "Bash(git commit *)",
+      "Bash(npx shadcn@latest add form input select card label toast --yes)",
+      "Bash(npx shadcn@latest add sonner --yes)",
+      "Bash(npx shadcn@latest add card form input select label --yes)",
+      "Bash(npx shadcn@latest add form --yes)",
+      "Bash(node -e \"console.log\\(require\\('./node_modules/@supabase/supabase-js/package.json'\\).version\\)\")"
     ]
   }
 }

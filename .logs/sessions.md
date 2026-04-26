@@ -32,3 +32,22 @@ Next action: Load Backend Dev + Frontend Dev skills → Sprint 1 Batch 1.A scaff
 **Files to read on resume (in order):**
 1. .logs/sessions.md (last SESSION_END — this entry)
 2. docs/stories-autojobs.md (the pending approval doc)
+
+### [2026-04-26 00:00] SESSION_START (Resume)
+**Resuming from**: Session END 2026-04-26 01:05
+**Status**: Stories approved → Begin Sprint 1
+**Next**: Batch 1.A scaffold → Batch 1.B database migrations
+
+### [2026-04-26 00:00] BATCH_1A_PROGRESS
+**Completed**:
+- Next.js 16 App Router + TypeScript + Tailwind v4 + ESLint initialized
+- shadcn/ui 4.x initialized (base-ui, clsx, lucide-react, tailwind-merge)
+- Supabase CLI initialized; lib/supabase/{client,server,middleware}.ts created
+- types/database.ts placeholder created
+- .env.local.example with all required env vars
+- Directory structure: app/, components/ui/, lib/supabase/, types/, tests/, supabase/migrations/
+- Git repo initialized, 2 commits
+**Pending (manual user steps)**:
+- Create GitHub repo + push
+- Connect to Vercel + add env vars
+- Cloudflare DNS: CNAME autojobs.ma → cname.vercel-dns.com
