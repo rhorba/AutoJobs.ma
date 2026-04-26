@@ -30,5 +30,6 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  return { supabaseResponse, user };
+  // Return supabase so middleware can do one additional profile query
+  return { supabaseResponse, user, supabase };
 }
