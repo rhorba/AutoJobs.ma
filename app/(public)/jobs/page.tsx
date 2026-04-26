@@ -3,6 +3,22 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Offres d'emploi automobile & EV au Maroc",
+  description:
+    "Parcourez les offres d'emploi dans l'industrie automobile, batteries et véhicules électriques au Maroc. CDI, CDD, Stage — Kenitra, Tanger, Casablanca, Jorf Lasfar.",
+  openGraph: {
+    title: "Offres d'emploi automobile & EV — AutoJobs.ma",
+    description:
+      "Gotion, Stellantis, Renault, Yazaki et plus recrutent sur AutoJobs.ma.",
+    url: "https://autojobs.ma/jobs",
+    siteName: "AutoJobs.ma",
+    locale: "fr_MA",
+    type: "website",
+  },
+};
 import type { Database } from "@/types/database";
 
 type JobPosting = Database["public"]["Tables"]["job_postings"]["Row"];
