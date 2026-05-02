@@ -1,152 +1,174 @@
-# Claude Team Skills — Installation Guide
+# AutoJobs.ma — Installation & Setup Guide
 
-## Quick Setup (Claude Code)
-
-### Step 1: Copy the skills folder
-Place the entire `skills/` directory in your project root:
-
-```
-your-project/
-├── skills/
-│   ├── orchestrator/
-│   ├── project-manager/
-│   ├── scrum-master/
-│   ├── tech-lead/
-│   ├── security-engineer/
-│   ├── dba/
-│   ├── ux-designer/
-│   ├── ui-designer/
-│   ├── backend-dev/
-│   ├── frontend-dev/
-│   ├── tester/
-│   ├── deployment/
-│   ├── devops-devsecops/
-│   │   └── references/        ← 5 deep-dive security files
-│   ├── digital-marketer/
-│   ├── copywriter/
-│   ├── content-marketer/
-│   ├── creative-intelligence/   ← Brainstorming, design thinking, innovation
-│   ├── test-architect/          ← Test strategy, ATDD, adversarial review
-│   └── project-monitor/         ← Logging, KPIs, status reports
-│       ├── references/
-│       └── templates/         ← init-logs.sh script
-├── .logs/                     ← Auto-created on first session
-│   ├── activity.md
-│   ├── decisions.md
-│   ├── issues.md
-│   ├── risks.md
-│   ├── corrections.md
-│   ├── communications.md
-│   ├── sessions.md
-│   └── metrics.md
-├── CLAUDE.md                  ← Copy this to project root
-├── QUICKSTART.md              ← Your cheat sheet
-└── ... your project files
-```
-
-### Step 2: Add CLAUDE.md to project root
-Copy the provided `CLAUDE.md` file to your project root. This is the entry point that tells Claude Code how to use the skills.
-
-### Step 3: Start working
-Open Claude Code and just describe what you need:
-- "I need to build a user authentication feature"
-- "There's a bug in the payment flow"
-- "Set up CI/CD for this project"
-- "Write a blog post about our new release"
-
-The orchestrator handles the rest.
+Full step-by-step setup for a fresh development environment.
 
 ---
 
-## How It Works
+## Prerequisites
 
-```
-You say something
-       │
-       ▼
- CLAUDE.md loads → reads orchestrator
-       │
-       ▼
- Orchestrator identifies the task type
-       │
-       ▼
- Loads ONLY the needed specialist
-       │
-       ▼
- Interactive work: options → pick → execute → verify
-       │
-       ▼
- Switches specialist if needed (with handoff summary)
-```
-
-## Token Usage
-
-This setup is designed to be lean:
-- CLAUDE.md: ~1K tokens (always loaded)
-- Orchestrator: ~2K tokens (loaded at session start)
-- Each specialist: ~1-2K tokens (loaded one at a time)
-- Reference files: ~3-5K tokens each (loaded only for deep dives)
-
-**Typical session cost**: ~3-5K tokens for routing + whatever the actual coding costs.
-Compare to loading everything at once: ~35K+ tokens wasted.
-
-## Customization
-
-### Add your project's conventions
-Edit `CLAUDE.md` to include:
-- Your tech stack specifics
-- Naming conventions
-- Deployment URLs
-- Team contacts
-- Any project-specific rules
-
-### Disable skills you don't need
-Remove or comment out rows in the CLAUDE.md skill locations table.
-If you're purely a backend project, you can skip: frontend-dev, copywriter, content-marketer, digital-marketer.
-
-### Add new specialists
-Create a new folder in `skills/` with a `SKILL.md` following the same pattern:
-1. YAML frontmatter with name + description
-2. Role definition
-3. Key templates/checklists
-4. Handoff points to other specialists
-5. Add it to the orchestrator's routing table + CLAUDE.md
+- Node.js 20+
+- npm 10+
+- [Supabase CLI](https://supabase.com/docs/guides/cli) (`npm install -g supabase`)
+- [Stripe CLI](https://stripe.com/docs/stripe-cli) (optional, for local webhook testing)
+- A Supabase project (free tier works)
+- A Stripe account (test mode)
+- A Resend account (free tier: 3,000 emails/month)
 
 ---
 
-## FAQ
+## Step 1 — Clone and install dependencies
 
-**Q: Does Claude really load skills one at a time?**
-A: Yes. The orchestrator tells Claude which skill to read for the current step. It never loads all 12 at once.
+```bash
+git clone https://github.com/rhorba/AutoJobs.ma.git
+cd AutoJobs.ma
+npm install
+```
 
-**Q: What if I need two specialists at the same time?**
-A: The orchestrator handles this with the handoff protocol — it summarizes context in 2-3 lines when switching, so no tokens are wasted repeating full history.
+---
 
-**Q: Can I use these with Claude.ai (not Claude Code)?**
-A: The skills are optimized for Claude Code, but you can paste individual SKILL.md content into Claude.ai conversations as needed. The orchestrator workflow works in any Claude interface.
+## Step 2 — Configure environment variables
 
-**Q: How do I update a skill?**
-A: Just edit the SKILL.md file. Changes take effect on the next session.
+```bash
+cp .env.local.example .env.local
+```
 
-**Q: How does project logging work?**
-A: On first session, Claude creates a `.logs/` directory with 8 structured log files (activity, decisions, issues, risks, corrections, communications, sessions, metrics). Every significant action gets appended as a log entry. You can ask for "status report", "KPIs", or "retro" at any time. Logs persist across sessions, so Claude can resume where you left off. You can also run `bash skills/project-monitor/templates/init-logs.sh` to initialize logs manually.
+Open `.env.local` and fill in every value. See the table below.
 
-**Q: Should I commit `.logs/` to git?**
-A: Up to you. The init script adds `.logs/` to `.gitignore` by default (keeps logs private). Remove that line if you want logs in version control for team visibility.
+| Variable | Required | Notes |
+|---|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | Yes | From Supabase → Settings → API |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Yes | From Supabase → Settings → API |
+| `SUPABASE_SERVICE_ROLE_KEY` | Yes | Server-only — never expose to client |
+| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Yes | `pk_test_...` for local dev |
+| `STRIPE_SECRET_KEY` | Yes | `sk_test_...` for local dev |
+| `STRIPE_WEBHOOK_SECRET` | Yes | Generated by `stripe listen` (see Step 5) |
+| `STRIPE_PRICE_ID_PAY_PER_POST` | Optional | Falls back to inline price_data if unset |
+| `RESEND_API_KEY` | Yes | From resend.com → API Keys |
+| `RESEND_FROM_EMAIL` | Yes | `noreply@autojobs.ma` (or your verified domain) |
+| `NEXT_PUBLIC_POSTHOG_KEY` | Optional | Leave blank to disable analytics locally |
+| `NEXT_PUBLIC_POSTHOG_HOST` | Optional | `https://eu.posthog.com` |
+| `NEXT_PUBLIC_APP_URL` | Yes | `http://localhost:3000` for local dev |
 
-## Intentional Trade-offs (vs BMAD Method)
+---
 
-Claude Team Skills intentionally skips these BMAD features to stay **lightweight and zero-dependency**:
+## Step 3 — Set up Supabase
 
-| BMAD Feature We Skip | Why We Skip It |
-|---|---|
-| NPM installer | CTS is zero-dependency — just copy markdown files, no Node.js required |
-| Multi-IDE support (10+ IDEs) | CTS targets Claude Code specifically for deeper integration |
-| Agent personas (named characters) | CTS uses role-based skills, not character personas — simpler, less tokens |
-| Party Mode (multi-agent debate) | CTS uses sequential handoffs to save tokens (~70% less than loading all agents) |
-| Modular expansion packs | CTS is a single bundle — one download, everything included |
-| Scale-adaptive intelligence | CTS uses explicit YAGNI gates — user picks complexity, not auto-detected |
-| Agent-as-Code (YAML compilation) | CTS uses plain markdown — editable with any text editor, no build step |
-| Web bundles (ChatGPT/Gemini) | CTS is Claude Code native — optimized for one platform done well |
+### Link to your project
+```bash
+supabase login
+supabase link --project-ref <your-project-ref>
+```
 
-These are **design choices, not missing features**. CTS prioritizes simplicity, token efficiency, and operational awareness (logging, KPIs, session resumption) over platform breadth and ecosystem size.
+Find your project ref in Supabase dashboard → Settings → General.
+
+### Push database migrations
+```bash
+supabase db push
+```
+
+This runs all three migrations in order:
+1. `20260426000001_initial_schema.sql` — 14 tables
+2. `20260426000002_indexes.sql` — performance indexes
+3. `20260426000003_rls_policies.sql` — Row-Level Security policies
+
+### Create the CV storage bucket
+
+In the Supabase dashboard:
+- Go to **Storage** → **New bucket**
+- Name: `candidate-cvs`
+- Make sure **Public bucket** is **unchecked** (must be private)
+
+### Generate TypeScript types (after schema changes)
+
+```bash
+supabase gen types typescript --linked > types/database.ts
+```
+
+---
+
+## Step 4 — Set up Stripe
+
+### Create the pay-per-post product
+
+In the Stripe dashboard (test mode):
+1. Go to **Products** → **Add product**
+2. Name: `Publication d'offre 30 jours`
+3. Price: `4500` EUR cents (€45.00), one-time
+4. Copy the **Price ID** → set `STRIPE_PRICE_ID_PAY_PER_POST` in `.env.local`
+
+### Create the webhook endpoint (production)
+
+In Stripe dashboard → Webhooks:
+- Endpoint URL: `https://autojobs.ma/api/v1/payments/webhook`
+- Event: `checkout.session.completed`
+- Copy the **Signing secret** → `STRIPE_WEBHOOK_SECRET` in Vercel env vars
+
+---
+
+## Step 5 — Local Stripe webhook (development)
+
+Install the Stripe CLI, then run:
+
+```bash
+stripe listen --forward-to http://localhost:3000/api/v1/payments/webhook
+```
+
+Copy the `whsec_...` secret it prints → set as `STRIPE_WEBHOOK_SECRET` in `.env.local`.
+
+---
+
+## Step 6 — Set up Resend (email)
+
+1. Create an account at [resend.com](https://resend.com)
+2. Go to **API Keys** → create a key → set `RESEND_API_KEY`
+3. For production: verify `autojobs.ma` domain via DNS (Cloudflare) and set `RESEND_FROM_EMAIL=noreply@autojobs.ma`
+4. For local dev: use `onboarding@resend.dev` as `RESEND_FROM_EMAIL` (no domain verification needed)
+
+---
+
+## Step 7 — Run the development server
+
+```bash
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000).
+
+---
+
+## Production Deployment (Vercel)
+
+### 1. Push to GitHub
+```bash
+git remote add origin https://github.com/rhorba/AutoJobs.ma.git
+git push -u origin main
+```
+
+### 2. Import to Vercel
+- Go to [vercel.com/new](https://vercel.com/new)
+- Import the `rhorba/AutoJobs.ma` repository
+- Add all environment variables from `.env.local` (with production values)
+- Deploy
+
+### 3. Cloudflare DNS
+```
+CNAME  autojobs.ma  →  cname.vercel-dns.com
+```
+
+### 4. Supabase — disable free tier pause
+- Upgrade to Pro ($25/mo) before public launch to prevent automatic pausing after 1 week of inactivity
+
+### 5. Update Stripe webhook to production URL
+- Add `https://autojobs.ma/api/v1/payments/webhook` in Stripe dashboard
+- Copy the new signing secret → update `STRIPE_WEBHOOK_SECRET` in Vercel
+
+---
+
+## Verify your setup
+
+```bash
+npm run typecheck    # Should exit 0
+npm run lint         # Should exit 0
+npm test             # Unit tests pass
+npm run build        # Production build succeeds
+```

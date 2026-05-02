@@ -1,139 +1,136 @@
-# Claude Team — Quick Reference Card
+# AutoJobs.ma — Developer Quick Reference
 
-## How to Start a Session
+## Local Setup (5 minutes)
 
-Just describe what you need. The orchestrator figures out the rest.
-
-### Example Prompts
-
-**Features:**
-```
-"I need to add user authentication to my app"
-"Build a dashboard that shows sales metrics"
-"Add a payment flow with Stripe"
-"Create a REST API for managing blog posts"
-```
-
-**Bug Fixes:**
-```
-"Users are getting a 500 error when they try to log in"
-"The search results are returning duplicates"
-"Password reset emails aren't being sent"
-"The page crashes when the cart is empty"
-```
-
-**Database:**
-```
-"Design the schema for a multi-tenant SaaS app"
-"My user query is taking 3 seconds, help me optimize"
-"I need to add a comments feature — what tables do I need?"
-"Help me write a migration to add soft deletes"
-```
-
-**Design:**
-```
-"Design the user flow for our onboarding experience"
-"I need a color scheme and typography for my app"
-"Wireframe the settings page"
-"Review this page for usability issues"
-```
-
-**Security:**
-```
-"Review my auth implementation for vulnerabilities"
-"Do a security audit of this codebase"
-"Help me set up rate limiting and input validation"
-"What compliance requirements do I need for handling health data?"
-```
-
-**DevOps:**
-```
-"Set up a CI/CD pipeline with GitHub Actions"
-"Dockerize this application"
-"Help me configure staging and production environments"
-"Add security scanning to my pipeline"
-```
-
-**Marketing:**
-```
-"Write a launch blog post for our new feature"
-"Create an email sequence for new signups"
-"Help me optimize this landing page for conversions"
-"Build a content calendar for the next month"
-```
-
-**Planning:**
-```
-"Let's plan the next sprint"
-"Break this epic into manageable stories"
-"Create a project charter for our new product"
-"What should we prioritize — here's our backlog..."
+```bash
+git clone https://github.com/rhorba/AutoJobs.ma.git
+cd AutoJobs.ma
+npm install
+cp .env.local.example .env.local   # fill in credentials
+npm run dev                         # http://localhost:3000
 ```
 
 ---
 
-## Quick Commands During a Session
+## Environment Variables (`.env.local`)
 
-| Say this... | To do this... |
+| Variable | Where to get it |
 |---|---|
-| "simpler" | Switch to a less complex approach |
-| "skip this" | Move to the next task/batch |
-| "go back" | Revisit a previous decision |
-| "what's the plan?" | See the current batch/task list |
-| "option A/B/C" | Pick from presented options |
-| "ship it" | Move to deployment |
-| "test this" | Run tests on current work |
-| "secure this" | Run security review |
-| "good, next" | Approve current task, move on |
-| "stop" | Pause and discuss |
-| "YAGNI" | Remind to keep it simple |
-| "status report" | Generate project status with KPIs |
-| "what did we do?" | Show activity log |
-| "what's broken?" | Show open issues/blockers |
-| "what did we decide?" | Show decision log |
-| "what changed?" | Show plan corrections |
-| "retro" | Generate retrospective from logs |
-| "KPIs" | Show project metrics |
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase dashboard → Settings → API |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase dashboard → Settings → API |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase dashboard → Settings → API (keep server-only) |
+| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Stripe dashboard → Developers → API keys |
+| `STRIPE_SECRET_KEY` | Stripe dashboard → Developers → API keys |
+| `STRIPE_WEBHOOK_SECRET` | Stripe dashboard → Webhooks (use `stripe listen` locally) |
+| `STRIPE_PRICE_ID_PAY_PER_POST` | Stripe dashboard → Products |
+| `RESEND_API_KEY` | resend.com → API Keys |
+| `NEXT_PUBLIC_POSTHOG_KEY` | PostHog → Project Settings |
 
 ---
 
-## Team Roster (16 specialists)
+## Database Setup
 
-| # | Specialist | One-liner |
+```bash
+# Link to your Supabase project
+supabase link --project-ref <ref>
+
+# Push all migrations (schema + indexes + RLS)
+supabase db push
+
+# Generate updated TypeScript types after schema changes
+supabase gen types typescript --linked > types/database.ts
+```
+
+Create a **private** storage bucket named `candidate-cvs` in the Supabase dashboard (Storage → New bucket → uncheck "Public").
+
+---
+
+## Stripe Webhook (local testing)
+
+```bash
+# Forward Stripe events to your local server
+stripe listen --forward-to http://localhost:3000/api/v1/payments/webhook
+
+# Copy the webhook signing secret it prints → STRIPE_WEBHOOK_SECRET in .env.local
+```
+
+---
+
+## Key Commands
+
+| Command | What it does |
+|---|---|
+| `npm run dev` | Start Next.js dev server with HMR |
+| `npm run build` | Production build (catches type errors) |
+| `npm run typecheck` | TypeScript check without building |
+| `npm run lint` | ESLint check |
+| `npm test` | Run Vitest unit tests |
+| `npm run test:coverage` | Tests + V8 coverage report |
+
+---
+
+## Routes at a Glance
+
+| Path | Who | Description |
 |---|---|---|
-| 1 | Orchestrator | Routes your request to the right specialist |
-| 2 | Project Manager | Scope, timeline, risk, charter |
-| 3 | Scrum Master | Sprints, stories, backlog, ceremonies |
-| 4 | Tech Lead | Architecture decisions, code standards |
-| 5 | Security Engineer | Threat models, auth design, compliance |
-| 6 | DBA | Schema, queries, migrations, indexes |
-| 7 | UX Designer | User flows, wireframes, usability |
-| 8 | UI Designer | Colors, typography, design tokens, visual polish |
-| 9 | Backend Dev | APIs, services, server logic |
-| 10 | Frontend Dev | Components, state, accessibility |
-| 11 | Tester | Unit/integration/e2e tests, QA |
-| 12 | Test Architect | Test strategy, ATDD, adversarial review, edge cases |
-| 13 | Deployment | Release, rollback, environments |
-| 14 | DevOps/DevSecOps | CI/CD, Docker, K8s, infra, scanning |
-| 15 | Creative Intelligence | Brainstorming, design thinking, storytelling, innovation |
-| 16 | Digital Marketer | SEO, campaigns, funnels, analytics |
-| 17 | Copywriter | Headlines, CTAs, email copy, UX writing |
-| 18 | Content Marketer | Blog posts, social media, content strategy |
-| 19 | Project Monitor | Activity logs, KPIs, status reports, retrospectives |
+| `/` | Public | Landing page |
+| `/jobs` | Public | Job board listing |
+| `/jobs/[id]` | Public | Job detail |
+| `/connexion` | Public | Login |
+| `/inscription/candidat` | Public | Candidate signup |
+| `/inscription/employeur` | Public | Employer signup |
+| `/profil` | Candidate | Profile + CV upload |
+| `/candidatures` | Candidate | Applications list |
+| `/offres` | Employer | Job postings list |
+| `/offres/nouvelle` | Employer | Create new job |
+| `/offres/[id]/paiement` | Employer | Pay to activate job |
+| `/offres/[id]/candidatures` | Employer | Applicant inbox |
+| `/admin/entreprises` | Admin | Company verification |
 
 ---
 
-## Workflow Shortcuts
+## API Overview
 
-| Workflow | Trigger phrases |
-|---|---|
-| 🐛 Bug Fix | "bug", "error", "broken", "crash", "not working" |
-| ✨ New Feature | "add", "build", "create", "implement", "new feature" |
-| 📝 Documentation | "document", "README", "API docs", "write docs" |
-| 🚀 New Project | "new project", "start from scratch", "scaffold" |
-| 📢 Marketing | "launch", "announce", "promote", "blog post" |
-| 🔒 Security Audit | "audit", "security review", "vulnerabilities" |
-| 🔄 Refactor | "refactor", "clean up", "tech debt", "improve" |
-| 🎨 UX/UI Design | "design", "wireframe", "user flow", "look and feel" |
-| 🗄️ Database | "schema", "migration", "slow query", "database" |
-| 🔐 Security Review | "threat model", "auth design", "compliance" |
+All endpoints under `/api/v1/`. Authentication via Supabase session cookie.
+
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| `POST` | `/auth/complete-profile` | user | Finish registration |
+| `GET/PATCH` | `/candidates/me` | candidate | Own profile |
+| `POST` | `/candidates/me/cv` | candidate | Upload CV (PDF ≤ 10 MB) |
+| `GET/POST` | `/candidates/me/experiences` | candidate | Work history |
+| `GET` | `/jobs` | public | List active jobs |
+| `POST` | `/jobs` | employer | Create job posting |
+| `GET` | `/jobs/[id]/applications` | employer | Applicant list |
+| `POST` | `/applications` | candidate | Apply to a job |
+| `PATCH` | `/applications/[id]` | employer | Update application status |
+| `POST` | `/payments/checkout` | employer | Create Stripe Checkout |
+| `POST` | `/payments/webhook` | Stripe | Activate job on payment |
+| `PATCH` | `/admin/companies/[id]` | admin | Verify company |
+| `GET` | `/tags` | public | List skill tags |
+
+---
+
+## Commit Convention
+
+```
+type(scope): description
+
+Types: feat, fix, docs, chore, refactor, test
+Examples:
+  feat(candidate): add CV upload with PDF validation
+  fix(payments): handle duplicate webhook events
+  docs: update API reference in DOCUMENTATION.md
+```
+
+---
+
+## Branching
+
+```
+main        → production (autojobs.ma via Vercel)
+feature/*   → new features
+fix/*       → bug fixes
+```
+
+Vercel auto-deploys `main` and generates preview URLs for all branches.

@@ -20,7 +20,15 @@
       "Bash(npx shadcn@latest add sonner --yes)",
       "Bash(npx shadcn@latest add card form input select label --yes)",
       "Bash(npx shadcn@latest add form --yes)",
-      "Bash(node -e \"console.log\\(require\\('./node_modules/@supabase/supabase-js/package.json'\\).version\\)\")"
+      "Bash(node -e \"console.log\\(require\\('./node_modules/@supabase/supabase-js/package.json'\\).version\\)\")",
+      "Bash(npx shadcn@latest add checkbox progress textarea badge separator --yes)",
+      "Bash(node -e \"const s = require\\('stripe'\\); console.log\\(Object.keys\\(require\\('./node_modules/stripe/esm/apiVersion.js'\\)\\)\\)\")",
+      "Bash(node -e \"const pkg = require\\('./node_modules/stripe/package.json'\\); console.log\\(pkg.version\\)\")",
+      "Bash(node -e \"const {ApiVersion} = require\\('./node_modules/stripe/esm/apiVersion.js'\\); console.log\\(ApiVersion\\)\")",
+      "Bash(cat .env.local.example)",
+      "Bash(cat .env.example)",
+      "Bash(node -e \"const p = require\\('./package.json'\\); console.log\\('vitest:', p.devDependencies.vitest, '@vitest/coverage-v8:', p.devDependencies['@vitest/coverage-v8']\\)\")",
+      "Bash(npx vitest *)"
     ]
   }
 }
