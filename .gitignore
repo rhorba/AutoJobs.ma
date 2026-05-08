@@ -43,5 +43,8 @@ next-env.d.ts
 # supabase
 supabase/.temp/
 
+# Claude Code local settings
+.claude/settings.local.json
+
 # env example (safe to commit, has no real values)
 !.env.local.example
