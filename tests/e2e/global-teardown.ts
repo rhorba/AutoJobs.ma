@@ -35,7 +35,8 @@ function deleteUser(userId: string): Promise<void> {
 async function globalTeardown() {
   console.log("\n🧹 E2E teardown starting...");
   try {
-    const state = JSON.parse(fs.readFileSync("test-results/.e2e-state.json", "utf-8"));
+    const raw = fs.readFileSync("test-results/.e2e-state.json", "utf-8").replace(/^﻿/, "");
+    const state = JSON.parse(raw);
     if (state.empId) await deleteUser(state.empId);
     if (state.candId) await deleteUser(state.candId);
     console.log("✅ E2E teardown complete — test users deleted");
