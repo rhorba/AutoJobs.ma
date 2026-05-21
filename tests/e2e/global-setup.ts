@@ -5,6 +5,7 @@ import * as path from "path";
 
 dotenv.config({ path: path.resolve(process.cwd(), ".env.local") });
 
+import { TEST_EMPLOYER_EMAIL, TEST_CANDIDATE_EMAIL, TEST_PASSWORD } from "./constants";
 export { TEST_EMPLOYER_EMAIL, TEST_CANDIDATE_EMAIL, TEST_PASSWORD } from "./constants";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
