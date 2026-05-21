@@ -3,6 +3,7 @@ import { ok, err } from "@/lib/api-response";
 import { resend, FROM_EMAIL } from "@/lib/resend";
 import { newApplicationEmail } from "@/emails/new-application";
 import { applicationConfirmedEmail } from "@/emails/application-confirmed";
+import { applyLimiter, checkLimit } from "@/lib/ratelimit";
 import { z } from "zod";
 
 const schema = z.object({
@@ -18,6 +19,8 @@ export async function POST(request: Request) {
   const { data: profile } = await supabase
     .from("profiles").select("role").eq("id", user.id).single();
   if (profile?.role !== "candidate") return err("Forbidden", 403);
+
+  if (!await checkLimit(applyLimiter, user.id)) return err("Trop de candidatures. Réessayez plus tard.", 429);
 
   const body = await request.json().catch(() => ({}));
   const parsed = schema.safeParse(body);

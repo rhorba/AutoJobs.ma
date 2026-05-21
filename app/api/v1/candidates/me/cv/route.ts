@@ -1,6 +1,7 @@
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { ok, err } from "@/lib/api-response";
 import { calcCompleteness } from "@/lib/completeness";
+import { cvLimiter, checkLimit } from "@/lib/ratelimit";
 
 const MAX_BYTES = 10 * 1024 * 1024; // 10 MB
 
@@ -8,6 +9,8 @@ export async function POST(request: Request) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return err("Unauthorized", 401);
+
+  if (!await checkLimit(cvLimiter, user.id)) return err("Trop de téléversements. Réessayez plus tard.", 429);
 
   const contentType = request.headers.get("content-type") ?? "";
   if (!contentType.includes("multipart/form-data")) {
