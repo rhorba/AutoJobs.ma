@@ -9,7 +9,9 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "test": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "test:e2e": "npx tsx tests/e2e/global-setup.ts && npx playwright test && npx tsx tests/e2e/global-teardown.ts",
+    "test:e2e:teardown": "npx tsx tests/e2e/global-teardown.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.4.1",
@@ -34,11 +36,13 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@playwright/test": "^1.60.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@vitest/coverage-v8": "^4.1.5",
+    "dotenv": "^17.4.2",
     "eslint": "^9",
     "eslint-config-next": "16.2.4",
     "supabase": "^2.95.3",
