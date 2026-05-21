@@ -51,14 +51,20 @@ async function authAdmin(method: string, urlPath: string, body?: unknown) {
   return apiRequest(method, `/auth/v1/admin${urlPath}`, body);
 }
 
-async function rest(table: string, body: unknown) {
+async function restPost(table: string, body: unknown) {
   return apiRequest("POST", `/rest/v1/${table}`, body);
+}
+
+async function restGet(table: string, query: string) {
+  return apiRequest("GET", `/rest/v1/${table}?${query}`);
 }
 
 async function globalSetup() {
   console.log("\n🔧 E2E global setup starting...");
 
   // ── Employer ──────────────────────────────────────────────────────────────
+  let empId: string | undefined;
+
   const empRes = await authAdmin("POST", "/users", {
     email: TEST_EMPLOYER_EMAIL,
     password: TEST_PASSWORD,
@@ -72,59 +78,73 @@ async function globalSetup() {
     },
   });
 
-  const empId: string | undefined =
-    empRes.data?.id ??
-    (empRes.data?.msg?.includes("already been registered") ? undefined : undefined);
+  empId = empRes.data?.id;
 
-  if (!empId && empRes.status !== 422) {
-    console.warn("Employer create response:", empRes.status, JSON.stringify(empRes.data));
+  if (!empId) {
+    // User already exists — look up their ID from the admin user list
+    const listRes = await authAdmin("GET", "/users?page=1&per_page=1000");
+    const users: any[] = listRes.data?.users ?? [];
+    empId = users.find((u: any) => u.email === TEST_EMPLOYER_EMAIL)?.id;
   }
 
   let companyId: string | undefined;
+  let recruiterId: string | undefined;
   let activeJobId: string | undefined;
 
   if (empId) {
-    await rest("profiles", { id: empId, role: "employer" });
+    await restPost("profiles", { id: empId, role: "employer" });
 
-    const compRes = await rest("companies", {
-      name: "E2E Motors",
-      slug: `e2e-motors-${Date.now()}`,
-      city: "Casablanca",
-      verified_at: new Date().toISOString(),
-    });
-    companyId = Array.isArray(compRes.data) ? compRes.data[0]?.id : compRes.data?.id;
+    // Check for existing recruiter record before creating a new one
+    const recLookup = await restGet("recruiters", `user_id=eq.${empId}&select=id,company_id`);
+    const existingRec = Array.isArray(recLookup.data) ? recLookup.data[0] : null;
 
-    if (companyId) {
-      const recRes = await rest("recruiters", {
-        user_id: empId,
-        company_id: companyId,
-        first_name: "Test",
-        last_name: "Recruteur",
-        is_company_owner: true,
+    if (existingRec) {
+      recruiterId = existingRec.id;
+      companyId = existingRec.company_id;
+    } else {
+      const compRes = await restPost("companies", {
+        name: "E2E Motors",
+        slug: `e2e-motors-${Date.now()}`,
+        city: "Casablanca",
+        verified_at: new Date().toISOString(),
       });
-      const recruiterId = Array.isArray(recRes.data) ? recRes.data[0]?.id : recRes.data?.id;
+      companyId = Array.isArray(compRes.data) ? compRes.data[0]?.id : compRes.data?.id;
 
-      if (recruiterId) {
-        const expiresAt = new Date();
-        expiresAt.setDate(expiresAt.getDate() + 30);
-
-        const jobRes = await rest("job_postings", {
-          title: "Technicien câblage automobile E2E",
-          city: "Kénitra",
-          contract_type: "CDI",
-          description_fr:
-            "Poste de test automatisé. Missions: câblage, assemblage et contrôle qualité sur ligne de production automobile. Expérience requise: 2 ans minimum. Formation BTS Électronique ou équivalent souhaité.",
+      if (companyId) {
+        const recRes = await restPost("recruiters", {
+          user_id: empId,
           company_id: companyId,
-          recruiter_id: recruiterId,
-          status: "active",
-          expires_at: expiresAt.toISOString(),
+          first_name: "Test",
+          last_name: "Recruteur",
+          is_company_owner: true,
         });
-        activeJobId = Array.isArray(jobRes.data) ? jobRes.data[0]?.id : jobRes.data?.id;
+        recruiterId = Array.isArray(recRes.data) ? recRes.data[0]?.id : recRes.data?.id;
       }
+    }
+
+    // Always create a fresh active job for this test session
+    if (recruiterId && companyId) {
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 30);
+
+      const jobRes = await restPost("job_postings", {
+        title: "Technicien câblage automobile E2E",
+        city: "Kénitra",
+        contract_type: "CDI",
+        description_fr:
+          "Poste de test automatisé. Missions: câblage, assemblage et contrôle qualité sur ligne de production automobile. Expérience requise: 2 ans minimum. Formation BTS Électronique ou équivalent souhaité.",
+        company_id: companyId,
+        recruiter_id: recruiterId,
+        status: "active",
+        expires_at: expiresAt.toISOString(),
+      });
+      activeJobId = Array.isArray(jobRes.data) ? jobRes.data[0]?.id : jobRes.data?.id;
     }
   }
 
   // ── Candidate ─────────────────────────────────────────────────────────────
+  let candId: string | undefined;
+
   const candRes = await authAdmin("POST", "/users", {
     email: TEST_CANDIDATE_EMAIL,
     password: TEST_PASSWORD,
@@ -137,11 +157,17 @@ async function globalSetup() {
     },
   });
 
-  const candId: string | undefined = candRes.data?.id;
+  candId = candRes.data?.id;
+
+  if (!candId) {
+    const listRes = await authAdmin("GET", "/users?page=1&per_page=1000");
+    const users: any[] = listRes.data?.users ?? [];
+    candId = users.find((u: any) => u.email === TEST_CANDIDATE_EMAIL)?.id;
+  }
 
   if (candId) {
-    await rest("profiles", { id: candId, role: "candidate" });
-    await rest("candidates", {
+    await restPost("profiles", { id: candId, role: "candidate" });
+    await restPost("candidates", {
       user_id: candId,
       first_name: "Fatima",
       last_name: "Zahra",
@@ -159,7 +185,6 @@ async function globalSetup() {
   console.log("✅ E2E setup complete:", JSON.stringify(state, null, 2));
 }
 
-// Only auto-run when executed directly via tsx/node (not when imported)
 if (process.argv[1] && (process.argv[1].endsWith("global-setup.ts") || process.argv[1].endsWith("global-setup.js"))) {
   globalSetup().catch((e) => {
     console.error("❌ E2E setup failed:", e);

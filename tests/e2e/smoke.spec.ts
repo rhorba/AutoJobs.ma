@@ -47,7 +47,7 @@ test.describe("Public pages", () => {
     // Page title or heading present
     await expect(page.locator("h1, h2").first()).toBeVisible();
     // At least the E2E test job should appear
-    await expect(page.getByText("Technicien câblage automobile E2E")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText("Technicien câblage automobile E2E").first()).toBeVisible({ timeout: 15_000 });
   });
 
   test("job detail page renders full content", async ({ page }) => {
@@ -114,7 +114,7 @@ test.describe("Employer flow", () => {
     await page.goto("/offres");
     await page.waitForLoadState("networkidle");
     await expect(page.getByRole("link", { name: /nouvelle offre/i })).toBeVisible();
-    await expect(page.getByText("Technicien câblage automobile E2E")).toBeVisible();
+    await expect(page.getByText("Technicien câblage automobile E2E").first()).toBeVisible();
   });
 
   test("/offres/nouvelle renders the full job form", async ({ page }) => {
@@ -216,7 +216,7 @@ test.describe("Candidate flow", () => {
   test("candidate can browse job listings", async ({ page }) => {
     await page.goto("/jobs");
     await page.waitForLoadState("networkidle");
-    await expect(page.getByText("Technicien câblage automobile E2E")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText("Technicien câblage automobile E2E").first()).toBeVisible({ timeout: 15_000 });
   });
 
   test("job detail shows description and postuler link", async ({ page }) => {
